@@ -37,12 +37,16 @@
         controls.update();
 
         // --- OBJEK ---
+        // Texture Loader
+        const textureLoader = new THREE.TextureLoader();
 
-        // Matahari
+        // Matahari (dengan tekstur dari folder texture)
         const sunGeo = new THREE.SphereGeometry(5, 32, 32);
-        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const sunTexture = textureLoader.load('./texture/matahari.png');
+        const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture });
         const sun = new THREE.Mesh(sunGeo, sunMat);
         scene.add(sun);
+
 
         // Cahaya (Pusat di matahari)
         const light = new THREE.PointLight(0xffffff, 1000, 0);
