@@ -64,9 +64,10 @@
         scene.add(earth);
 
          //JANGAN DIUBAH
-        // Bulan
+        // Bulan (dengan tekstur dari folder texture)
         const moonGeo = new THREE.SphereGeometry(0.5, 32, 32);
-        const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const moonTexture = textureLoader.load('./texture/bulan.jpg');
+        const moonMat = new THREE.MeshStandardMaterial({ map: moonTexture });
         const moon = new THREE.Mesh(moonGeo, moonMat);
         earth.add(moon); // Anak dari Bumi
         moon.position.x = 4; // Jarak bulan dari bumi
