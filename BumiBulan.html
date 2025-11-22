@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tata Surya Three.js (Fixed)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: black; }
+        canvas { display: block; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- SETUP SCENE ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        camera.position.set(0, 20, 50);
+        controls.update();
+
+        // --- OBJEK ---
+
+        // Matahari
+        const sunGeo = new THREE.SphereGeometry(5, 32, 32);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const sun = new THREE.Mesh(sunGeo, sunMat);
+        scene.add(sun);
+
+        // Cahaya (Pusat di matahari)
+        const light = new THREE.PointLight(0xffffff, 1000, 0);
+        sun.add(light);
+        // Tambahkan cahaya ambient agar sisi gelap tidak hitam pekat
+        const ambientLight = new THREE.AmbientLight(0x404040); 
+        scene.add(ambientLight);
+
+        // Bumi
+        const earthGeo = new THREE.SphereGeometry(2, 32, 32);
+        const earthMat = new THREE.MeshStandardMaterial({ color: 0x2233ff });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
+        scene.add(earth);
+
+        // Bulan
+        const moonGeo = new THREE.SphereGeometry(0.5, 32, 32);
+        const moonMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const moon = new THREE.Mesh(moonGeo, moonMat);
+        earth.add(moon); // Anak dari Bumi
+        moon.position.x = 4; // Jarak bulan dari bumi
+
+        // Bintang (Background)
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1000;
+        const posArray = new Float32Array(starCount * 3);
+        for(let i = 0; i < starCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 200;
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starMat = new THREE.PointsMaterial({size: 0.1, color: 0xffffff});
+        const stars = new THREE.Points(starGeo, starMat);
+        scene.add(stars);
+
+        // --- ANIMASI ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001; // Waktu dalam detik
+
+            // Rotasi Matahari
+            sun.rotation.y += 0.005;
+
+            // Orbit Bumi
+            earth.position.x = Math.cos(time) * 20;
+            earth.position.z = Math.sin(time) * 20;
+            earth.rotation.y += 0.02;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- RESIZE WINDOW ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
