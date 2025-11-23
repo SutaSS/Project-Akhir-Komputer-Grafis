@@ -3,37 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tata Surya Three.js (Fixed)</title>
+    <title>Tata Surya Gamifikasi (Shadow Fixed & UI Left)</title>
     <style>
         body { 
             margin: 0; 
             overflow: hidden; 
             background-color: black; 
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
         }
         canvas { display: block; }
+        
+        /* 1. Panel Kontrol */
         #controls {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 12px 14px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            user-select: none;
-            backdrop-filter: blur(5px);
-            max-width: 220px;
+            top: 10px; left: 10px;
+            background: rgba(20, 20, 30, 0.8);
+            padding: 15px; border-radius: 10px;
+            display: flex; flex-direction: column; gap: 10px;
+            user-select: none; backdrop-filter: blur(5px);
+            width: 220px; border: 1px solid rgba(255,255,255,0.1);
+            z-index: 10;
         }
-        #controls h3 {
-            margin: 0 0 4px 0;
-            font-size: 1rem;
+        #controls h3 { margin: 0 0 5px 0; font-size: 1rem; color: #FFD700; }
+        #controls label { font-size: 0.85em; margin-bottom: 2px; display: block; }
+        #controls input[type="range"] { width: 100%; cursor: pointer; accent-color: #FFD700;}
+
+        /* Tombol Game */
+        #game-btn {
+            position: absolute; top: 20px; right: 20px;
+            padding: 12px 25px; font-size: 1rem;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none; border-radius: 50px; cursor: pointer;
+            font-weight: bold; color: #000;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            transition: transform 0.2s; z-index: 10;
         }
-        #controls label { font-size: 0.9em; margin-bottom: 5px; display: block; }
-        #controls input[type="range"] { width: 160px; cursor: pointer; }
-        .note { font-size: 0.75em; color: #aaa; margin-top: 5px; line-height: 1.3; }
+        #game-btn:hover { transform: scale(1.05); }
+        #game-btn.active { background: #ff4444; color: white; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
+
+        /* 2. Modal Pertanyaan */
+        #quiz-modal {
+            display: none; position: absolute;
+            top: 260px; 
+            left: 10px; 
+            
+            background: rgba(10, 15, 30, 0.90);
+            padding: 20px; border-radius: 15px; border: 2px solid #FFD700;
+            text-align: center; width: 220px;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        #quiz-modal h2 { margin-top: 0; color: #FFD700; font-size: 1.1rem; }
+        #quiz-modal p { font-size: 0.9rem; line-height: 1.4; margin-bottom: 15px; }
+        
+        /* Layout Grid Opsi Jawaban */
+        .options-grid { display: flex; flex-direction: column; gap: 8px; }
+        .btn-option {
+            background: #333; color: white; border: 1px solid #555;
+            padding: 8px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: 0.2s;
+        }
+        .btn-option:hover { background: #555; }
+        
+        #feedback { display: none; margin-top: 10px; font-weight: bold; font-size: 1rem; }
+        .correct { color: #00ff00; } .wrong { color: #ff0000; }
+        .close-btn { margin-top:10px; background:none; border:none; color:#aaa; cursor:pointer; text-decoration:underline; font-size: 0.8rem; }
     </style>
     <script type="importmap">
         {
@@ -46,206 +80,257 @@
 </head>
 <body>
     <div id="controls">
-        <h3>Kontrol Tata Surya</h3>
-        <div>
-            <label for="revolutionSpeed">Kecepatan Revolusi (Orbit)</label>
-            <input type="range" id="revolutionSpeed" min="0" max="5" value="1" step="0.1">
-        </div>
-        <div>
-            <label for="rotationSpeed">Kecepatan Rotasi Planet</label>
-            <input type="range" id="rotationSpeed" min="0" max="5" value="1" step="0.1">
-        </div>
-        <div class="note">*Skala ukuran dan jarak tidak 100% akurat agar semua planet bisa terlihat dalam satu layar.</div>
+        <h3>Panel Kontrol</h3>
+        <div><label>Kecepatan Orbit</label><input type="range" id="revolutionSpeed" min="0" max="3" value="1" step="0.1"></div>
+        <div><label>Kecepatan Rotasi</label><input type="range" id="rotationSpeed" min="0" max="3" value="1" step="0.1"></div>
+        <div><label>Intensitas Cahaya</label><input type="range" id="lightIntensity" min="0" max="2000" value="1200" step="50"></div>
     </div>
+
+    <button id="game-btn">Mulai Bermain!<button>
+
+    <div id="quiz-modal">
+        <h2>Tebak Planet!</h2>
+        <p id="question-text">...</p>
+        <div class="options-grid" id="options-container"></div>
+        <div id="feedback"></div>
+        <button class="close-btn" onclick="closeModal()">Tutup / Kembali</button>
+    </div>
+
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-        // --- SETUP SCENE ---
+        // --- SETUP ---
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
-        
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Shadow lembut
+        
         document.body.appendChild(renderer.domElement);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
         
-        camera.position.set(0, 60, 100);
-        controls.update();
+        camera.position.set(0, 80, 140);
 
-        // Slider untuk mengatur kecepatan
-        const revolutionSpeedInput = document.getElementById('revolutionSpeed');
-        const rotationSpeedInput = document.getElementById('rotationSpeed');
-
-        // --- OBJEK ---
-        // Texture Loader
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
         const textureLoader = new THREE.TextureLoader();
 
-        //JANGAN DIUBAH
-        // Matahari (dengan tekstur dari folder texture)
-        const sunGeo = new THREE.SphereGeometry(5, 32, 32);
-        const sunTexture = textureLoader.load('./texture/matahari.png');
-        const sunMat = new THREE.MeshBasicMaterial({ map: sunTexture });
-        const sun = new THREE.Mesh(sunGeo, sunMat);
-        scene.add(sun);
-
-        // Cahaya (Pusat di matahari)
-        const light = new THREE.PointLight(0xffffff, 1000, 0);
-        light.castShadow = true;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
-        light.shadow.bias = -0.0001;
-        sun.add(light);
-        // Tambahkan cahaya ambient agar sisi gelap tidak hitam pekat
-        const ambientLight = new THREE.AmbientLight(0x404040); 
-        scene.add(ambientLight);
-
-         //JANGAN DIUBAH
-        // Bumi (dengan tekstur dari URL)
-        const earthGeo = new THREE.SphereGeometry(2, 32, 32);
-        const earthTexture = textureLoader.load('./texture/bumi.jpg');
-        const earthMat = new THREE.MeshStandardMaterial({ map: earthTexture });
-        const earth = new THREE.Mesh(earthGeo, earthMat);
-        earth.castShadow = true;
-        earth.receiveShadow = true;
-        scene.add(earth);
-
-         //JANGAN DIUBAH
-        // Bulan (dengan tekstur dari folder texture)
-        const moonGeo = new THREE.SphereGeometry(0.5, 32, 32);
-        const moonTexture = textureLoader.load('./texture/bulan.jpg');
-        const moonMat = new THREE.MeshStandardMaterial({ map: moonTexture });
-        const moon = new THREE.Mesh(moonGeo, moonMat);
-        moon.castShadow = true;
-        moon.receiveShadow = true;
-        earth.add(moon); // Anak dari Bumi
-        moon.position.x = 4; // Jarak bulan dari bumi
-
-        // Bintang (Background)
-        const starGeo = new THREE.BufferGeometry();
-        const starCount = 1000;
-        const posArray = new Float32Array(starCount * 3);
-        for(let i = 0; i < starCount * 3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 200;
-        }
-        starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const starMat = new THREE.PointsMaterial({size: 0.1, color: 0xffffff});
-        const stars = new THREE.Points(starGeo, starMat);
-        scene.add(stars);
-
-
-        // Data Planet (Bumi dihapus dari list ini karena sudah ada di atas)
+        // --- DATA PLANET ---
         const planetData = [
-            { name: "Mercury", texture: './texture/mercury.jpg', size: 0.8, distance: 10, speed: 4.7 },
-            { name: "Venus",   texture: './texture/venus.jpg',   size: 1.5, distance: 15, speed: 3.5 },
-            { name: "Mars",    texture: './texture/mars.jpg',    size: 0.9, distance: 30, speed: 2.4 },
-            { name: "Jupiter", texture: './texture/jupiter.jpg', size: 4.0, distance: 45, speed: 1.3 },
-            { name: "Saturn",  texture: './texture/saturn.jpg',  size: 3.5, distance: 65, speed: 0.9, hasRing: true },
-            { name: "Uranus",  texture: './texture/uranus.jpg',  size: 2.5, distance: 85, speed: 0.6 },
-            { name: "Neptune", texture: './texture/neptune.jpg', size: 2.4, distance: 100, speed: 0.5 }
+            { name: "Merkurius", texture: './texture/mercury.jpg', size: 0.8, distance: 15, speed: 4.7, riddle: "Aku planet terkecil dan paling dekat dengan Matahari." },
+            { name: "Venus", texture: './texture/venus.jpg', size: 1.5, distance: 22, speed: 3.5, riddle: "Aku planet terpanas, atmosferku sangat tebal." },
+            { name: "Bumi", texture: './texture/bumi.jpg', size: 1.6, distance: 30, speed: 3.0, hasMoon: true, riddle: "Aku satu-satunya tempat yang memiliki kehidupan." },
+            { name: "Mars", texture: './texture/mars.jpg', size: 0.9, distance: 40, speed: 2.4, riddle: "Aku dijuluki 'Planet Merah'." },
+            { name: "Jupiter", texture: './texture/jupiter.jpg', size: 4.0, distance: 60, speed: 1.3, riddle: "Aku raksasa gas terbesar di tata surya." },
+            { name: "Saturnus", texture: './texture/saturn.jpg', size: 3.5, distance: 80, speed: 0.9, hasRing: true, riddle: "Aku terkenal dengan cincin indahku." },
+            { name: "Uranus", texture: './texture/uranus.jpg', size: 2.5, distance: 100, speed: 0.6, riddle: "Aku menggelinding miring dan berwarna biru muda." },
+            { name: "Neptunus", texture: './texture/neptune.jpg', size: 2.4, distance: 120, speed: 0.5, riddle: "Aku planet terjauh, dingin, dan berangin kencang." }
         ];
 
-        const otherPlanets = [];
+        // --- OBJECTS ---
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 }); 
+        try { sunMat.map = textureLoader.load('./texture/matahari.png'); } catch(e){}
+        const sun = new THREE.Mesh(new THREE.SphereGeometry(7, 64, 64), sunMat);
+        scene.add(sun);
+        
+        const sunLight = new THREE.PointLight(0xffffff, 1200, 400);
+        sunLight.castShadow = true;
+        
+        sunLight.shadow.mapSize.width = 2048; // Resolusi tinggi (Default 512)
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.bias = -0.00005; 
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 200;
+        
+        sun.add(sunLight);
+        scene.add(new THREE.AmbientLight(0x404040, 0.2));
+
+        const planetsMeshList = [];
 
         planetData.forEach((data) => {
-
-            const planetTexture = textureLoader.load(data.texture);
-
-            // Buat Mesh Planet dengan Texture
-            const geometry = new THREE.SphereGeometry(data.size, 32, 32);
-            const material = new THREE.MeshStandardMaterial({ 
-                map: planetTexture,
-                roughness: 0.7,
-                metalness: 0.1
-            });
-            const planet = new THREE.Mesh(geometry, material);
-            planet.castShadow = true;
+            const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.8 });
+            try { mat.map = textureLoader.load(data.texture); mat.color = new THREE.Color(0xffffff); } catch(e){}
+            const planet = new THREE.Mesh(new THREE.SphereGeometry(data.size, 32, 32), mat);
+            
+            planet.castShadow = true; 
             planet.receiveShadow = true;
             
-            // Buat Garis Orbit (Visualisasi jalur)
-            const orbitGeo = new THREE.RingGeometry(data.distance - 0.1, data.distance + 0.1, 64);
-            const orbitMat = new THREE.MeshBasicMaterial({ 
-                color: 0xffffff, 
-                side: THREE.DoubleSide, 
-                opacity: 0.15, 
-                transparent: true 
-            });
-            const orbit = new THREE.Mesh(orbitGeo, orbitMat);
-            orbit.rotation.x = -Math.PI / 2;
+            planet.userData = { ...data, angle: Math.random() * Math.PI * 2 };
+
+            const orbit = new THREE.Mesh(new THREE.RingGeometry(data.distance-0.1, data.distance+0.1, 128), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, opacity: 0.1, transparent: true }));
+            orbit.rotation.x = -Math.PI/2;
             scene.add(orbit);
 
-            // Khusus Saturnus: Tambah Cincin 
-            if (data.hasRing) {
-                const ringGeo = new THREE.RingGeometry(data.size + 1, data.size + 3.5, 64);
-                const ringMat = new THREE.MeshStandardMaterial({ 
-                    color: 0xAA8866, 
-                    side: THREE.DoubleSide,
-                    transparent: true,
-                    opacity: 0.8
-                });
-                const ring = new THREE.Mesh(ringGeo, ringMat);
-                ring.rotation.x = -Math.PI / 2;
-                ring.rotation.y = -Math.PI / 12;
-                ring.castShadow = true;
-                ring.receiveShadow = true;
+            if(data.hasRing) {
+                const ring = new THREE.Mesh(new THREE.RingGeometry(data.size+1.5, data.size+4, 64), new THREE.MeshStandardMaterial({ color: 0xAA8866, side: THREE.DoubleSide, transparent:true, opacity:0.8 }));
+                ring.rotation.x = -Math.PI/2; ring.rotation.y = -0.2;
+                ring.receiveShadow = true; 
                 planet.add(ring);
+            }
+            if(data.hasMoon) {
+                const moon = new THREE.Mesh(new THREE.SphereGeometry(data.size*0.3), new THREE.MeshStandardMaterial({color:0xdddddd}));
+                try { moon.material.map = textureLoader.load('./texture/bulan.jpg'); } catch(e){}
+                
+                moon.position.set(data.size+2, 0, 0);
+                
+                moon.castShadow = true;
+                moon.receiveShadow = true;
+                
+                planet.add(moon);
+                planet.moon = moon; // Simpan referensi bulan
             }
 
             scene.add(planet);
-
-            // Posisi awal acak
-            const initialAngle = Math.random() * Math.PI * 2; 
-            planet.position.x = Math.cos(initialAngle) * data.distance;
-            planet.position.z = Math.sin(initialAngle) * data.distance;
-
-            // Simpan data
-            planet.orbitDistance = data.distance;
-            planet.orbitSpeed = data.speed;
-            planet.angleOffset = initialAngle;
-
-            otherPlanets.push(planet);
+            planetsMeshList.push(planet);
         });
+
+        const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3000).map(()=>(Math.random()-0.5)*800), 3)), new THREE.PointsMaterial({size:0.2, color:0xffffff}));
+        scene.add(stars);
+
+        // --- GAME LOGIC ---
+        let isGameActive = false;
+        let focusTarget = null;
+        let isTransitioning = false;
+        
+        const gameBtn = document.getElementById('game-btn');
+        const revSpeedInput = document.getElementById('revolutionSpeed');
+        const rotSpeedInput = document.getElementById('rotationSpeed');
+        const lightInput = document.getElementById('lightIntensity');
+        const quizModal = document.getElementById('quiz-modal');
+
+        gameBtn.addEventListener('click', () => {
+            isGameActive = !isGameActive;
+            if(isGameActive) {
+                gameBtn.textContent = "Akhiri Game~";
+                gameBtn.classList.add('active');
+                revSpeedInput.value = 0.5; 
+                alert("Mode Game Aktif! Klik planet untuk ZOOM & TEBAK.");
+            } else {
+                gameBtn.textContent = "Mulai Bermain!";
+                gameBtn.classList.remove('active');
+                revSpeedInput.value = 1; 
+                closeModal();
+            }
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            if(!isGameActive) return;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(planetsMeshList);
+            document.body.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+        });
+
+        window.addEventListener('click', (event) => {
+            if(!isGameActive) return;
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(planetsMeshList);
+
+            if (intersects.length > 0) {
+                const clickedPlanet = intersects[0].object;
+                focusTarget = clickedPlanet;
+                isTransitioning = true;
+                showQuiz(clickedPlanet.userData);
+            }
+        });
+
+        function showQuiz(pData) {
+            quizModal.style.display = 'block';
+            document.getElementById('question-text').textContent = pData.riddle;
+            document.getElementById('feedback').style.display = 'none';
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            let options = [pData.name];
+            const others = planetsMeshList.map(p => p.userData.name).filter(n => n !== pData.name).sort(() => 0.5 - Math.random()).slice(0, 3);
+            options = options.concat(others).sort(() => 0.5 - Math.random());
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(opt, pData.name);
+                container.appendChild(btn);
+            });
+        }
+
+        window.checkAnswer = (sel, cor) => {
+            const fb = document.getElementById('feedback');
+            fb.style.display = 'block';
+            if(sel === cor) { fb.textContent = "BENAR!"; fb.className = "correct"; }
+            else { fb.textContent = "SALAH!"; fb.className = "wrong"; }
+        };
+
+        window.closeModal = () => {
+            document.getElementById('quiz-modal').style.display = 'none';
+            focusTarget = null;
+            isTransitioning = false;
+        }
 
         // --- ANIMASI ---
         function animate() {
             requestAnimationFrame(animate);
             
-            const time = Date.now() * 0.001; // Waktu dalam detik
-            const revMultiplier = parseFloat(revolutionSpeedInput.value);
-            const rotMultiplier = parseFloat(rotationSpeedInput.value);
+            let revSpeed = parseFloat(revSpeedInput.value);
+            let rotSpeed = parseFloat(rotSpeedInput.value);
 
-            // Rotasi Matahari
-            sun.rotation.y += 0.005 * rotMultiplier;
+            sun.rotation.y += 0.002 * rotSpeed;
+            sunLight.intensity = parseFloat(lightInput.value);
 
-            // Orbit Bumi
-            const earthAngle = time * revMultiplier;
-            earth.position.x = Math.cos(earthAngle) * 20;
-            earth.position.z = Math.sin(earthAngle) * 20;
-            earth.rotation.y += 0.02 * rotMultiplier;
+            planetsMeshList.forEach(planet => {
+                planet.rotation.y += 0.01 * rotSpeed;
+
+                // Stop orbit jika sedang difokuskan
+                if (planet !== focusTarget) {
+                    planet.userData.angle += 0.002 * planet.userData.speed * revSpeed;
+                    planet.position.x = Math.cos(planet.userData.angle) * planet.userData.distance;
+                    planet.position.z = Math.sin(planet.userData.angle) * planet.userData.distance;
+                }
+
+                // Animasi Bulan 
+                if (planet.moon) {
+                    // Kecepatan putar bulan
+                    const time = Date.now() * 0.001; 
+                    planet.moon.position.x = Math.cos(time) * (planet.geometry.parameters.radius + 2);
+                    planet.moon.position.z = Math.sin(time) * (planet.geometry.parameters.radius + 2);
+                }
+            });
+
+            // LOGIKA KAMERA
+            if (focusTarget) {
+                controls.target.copy(focusTarget.position);
+
+                if (isTransitioning) {
+                    // Geser kamera ke samping KANAN planet
+                    const offsetDistance = focusTarget.geometry.parameters.radius * 5;
+                    const targetPos = new THREE.Vector3(
+                        focusTarget.position.x + offsetDistance, 
+                        focusTarget.position.y + (offsetDistance * 0.5), 
+                        focusTarget.position.z + offsetDistance 
+                    );
+                    
+                    camera.position.lerp(targetPos, 0.05);
+                    if (camera.position.distanceTo(targetPos) < 0.5) {
+                        isTransitioning = false; 
+                    }
+                }
+            } else {
+                controls.target.lerp(new THREE.Vector3(0,0,0), 0.05);
+            }
 
             controls.update();
             renderer.render(scene, camera);
-
-            // Animasi Planet Tambahan
-            otherPlanets.forEach(planet => {
-                const speedFactor = 0.2;
-                const angle = (time * planet.orbitSpeed * speedFactor * revMultiplier) + planet.angleOffset;
-                
-                planet.position.x = Math.cos(angle) * planet.orbitDistance;
-                planet.position.z = Math.sin(angle) * planet.orbitDistance;
-                
-                // Rotasi planet pada porosnya
-                planet.rotation.y += 0.01 * rotMultiplier;
-            });
         }
-
         animate();
 
-        // --- RESIZE WINDOW ---
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
