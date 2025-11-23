@@ -86,7 +86,7 @@
         <div><label>Intensitas Cahaya</label><input type="range" id="lightIntensity" min="0" max="2000" value="1200" step="50"></div>
     </div>
 
-    <button id="game-btn">Mulai Bermain!<button>
+    <button id="game-btn">Mulai Bermain!</button>
 
     <div id="quiz-modal">
         <h2>Tebak Planet!</h2>
@@ -105,6 +105,7 @@
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Shadow lembut
         
@@ -143,7 +144,7 @@
         
         sunLight.shadow.mapSize.width = 2048; // Resolusi tinggi (Default 512)
         sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.bias = -0.00005; 
+        sunLight.shadow.bias = -0.00005;
         sunLight.shadow.camera.near = 0.5;
         sunLight.shadow.camera.far = 200;
         
@@ -156,7 +157,7 @@
             const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.8 });
             try { mat.map = textureLoader.load(data.texture); mat.color = new THREE.Color(0xffffff); } catch(e){}
             const planet = new THREE.Mesh(new THREE.SphereGeometry(data.size, 32, 32), mat);
-            
+
             planet.castShadow = true; 
             planet.receiveShadow = true;
             
@@ -295,7 +296,7 @@
                     planet.position.z = Math.sin(planet.userData.angle) * planet.userData.distance;
                 }
 
-                // Animasi Bulan 
+                // Animasi Bulan
                 if (planet.moon) {
                     // Kecepatan putar bulan
                     const time = Date.now() * 0.001; 
@@ -304,12 +305,11 @@
                 }
             });
 
-            // LOGIKA KAMERA
+            // LOGIKA KAMERA (Free Look saat Zoom)
             if (focusTarget) {
                 controls.target.copy(focusTarget.position);
 
                 if (isTransitioning) {
-                    // Geser kamera ke samping KANAN planet
                     const offsetDistance = focusTarget.geometry.parameters.radius * 5;
                     const targetPos = new THREE.Vector3(
                         focusTarget.position.x + offsetDistance, 
