@@ -278,10 +278,10 @@
 
     <!-- Planet Hover Tooltip -->
     <div id="planet-tooltip">
-        <div class="tooltip-title" id="tooltip-planet-name">Planet</div>
+        <div class="tooltip-title">🪐 KLIK AKU!</div>
         <div class="tooltip-cta">
             <span class="tooltip-icon">👆</span>
-            <span>Klik untuk mempelajari lebih lanjut!</span>
+            <span>Tebak aku planet apa?</span>
         </div>
     </div>
 
@@ -415,7 +415,6 @@
         const lightInput = document.getElementById('lightIntensity');
         const quizModal = document.getElementById('quiz-modal');
         const planetTooltip = document.getElementById('planet-tooltip');
-        const tooltipPlanetName = document.getElementById('tooltip-planet-name');
 
         gameBtn.addEventListener('click', () => {
             isGameActive = false;
@@ -436,8 +435,6 @@
             
             if (intersects.length > 0) {
                 document.body.style.cursor = 'pointer';
-                const hoveredPlanet = intersects[0].object;
-                tooltipPlanetName.textContent = hoveredPlanet.userData.name;
                 planetTooltip.style.display = 'block';
                 planetTooltip.style.left = (event.clientX + 20) + 'px';
                 planetTooltip.style.top = (event.clientY - 40) + 'px';
