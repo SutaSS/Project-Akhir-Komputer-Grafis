@@ -3,7 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Petualangan Tata Surya - Game edukasi interaktif 3D untuk mempelajari sistem tata surya">
     <title>Petualangan Tata Surya 3D - Game Edukasi</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <h1 class="game-title">🌌 PETUALANGAN TATA SURYA 🪐</h1>
+        <p class="game-subtitle">Jelajahi & Pelajari Sistem Tata Surya Secara Interaktif</p>
+        <button class="start-btn" onclick="startGame()">
+            <span>🚀 MULAI PETUALANGAN</span>
+        </button>
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon">🎮</div>
+                <div>Mode Game<br>Interaktif</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎓</div>
+                <div>Belajar Sambil<br>Bermain</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🌟</div>
+                <div>Grafis 3D<br>Realistis</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL KONTROL -->
+    <div id="controls">
+        <h3>Panel Kontrol</h3>
+        <div>
+            <label>Kecepatan Orbit</label>
+            <input type="range" id="revolutionSpeed" min="0" max="3" value="1" step="0.1">
+        </div>
+        <div>
+            <label>Kecepatan Rotasi</label>
+            <input type="range" id="rotationSpeed" min="0" max="3" value="1" step="0.1">
+        </div>
+        <div>
+            <label>Intensitas Cahaya</label>
+            <input type="range" id="lightIntensity" min="0" max="2000" value="1200" step="50">
+        </div>
+    </div>
+
+    <!-- TOMBOL AKHIRI GAME -->
+    <button id="game-btn">❌ Akhiri Game</button>
+
+    <!-- PLANET TOOLTIP -->
+    <div id="planet-tooltip">
+        <div class="tooltip-title">🪐 KLIK AKU!</div>
+        <div class="tooltip-cta">
+            <span class="tooltip-icon">👆</span>
+            <span>Tebak aku planet apa?</span>
+        </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div id="quiz-modal">
+        <h2>Tebak Planet!</h2>
+        <p id="question-text">...</p>
+        <div class="options-grid" id="options-container"></div>
+        <div id="feedback"></div>
+        <button class="close-btn" onclick="closeModal()">Tutup / Kembali</button>
+    </div>
+
+    <!-- MAIN SCRIPT -->
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
     <style>
         body { 
             margin: 0; 

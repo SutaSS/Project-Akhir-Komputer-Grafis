@@ -1,0 +1,407 @@
+/* ========================================
+   GLOBAL STYLES
+   ======================================== */
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    background-color: black; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+canvas { 
+    display: block; 
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ========================================
+   SPLASH SCREEN / MAIN MENU
+   ======================================== */
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; 
+    height: 100vh;
+    background: radial-gradient(circle at center, #0a0e27 0%, #000000 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 1s ease-in;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+#splash-screen.hidden {
+    animation: fadeOut 0.8s ease-out forwards;
+    pointer-events: none;
+}
+
+.game-title {
+    font-size: clamp(2rem, 8vw, 4rem);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, #FFD700, #FFA500, #FF6B6B, #4ECDC4);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 3s ease infinite;
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.game-subtitle {
+    font-size: clamp(0.9rem, 3vw, 1.2rem);
+    color: #aaa;
+    margin-bottom: 50px;
+    text-align: center;
+    letter-spacing: 2px;
+    padding: 0 10px;
+}
+
+.start-btn {
+    padding: clamp(15px, 3vw, 20px) clamp(40px, 10vw, 60px);
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    font-weight: bold;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 50px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.start-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.start-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.start-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.8);
+}
+
+.start-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+.features {
+    margin-top: 40px;
+    display: flex;
+    gap: clamp(15px, 5vw, 30px);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.feature-item {
+    text-align: center;
+    color: #ddd;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    min-width: 100px;
+}
+
+.feature-icon {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    margin-bottom: 10px;
+}
+
+/* ========================================
+   PANEL KONTROL
+   ======================================== */
+#controls {
+    position: absolute;
+    top: 10px; 
+    left: 10px;
+    background: rgba(20, 20, 30, 0.8);
+    padding: 15px; 
+    border-radius: 10px;
+    display: none;
+    flex-direction: column; 
+    gap: 10px;
+    user-select: none; 
+    backdrop-filter: blur(5px);
+    width: clamp(180px, 30vw, 220px);
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 10;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+}
+
+#controls h3 { 
+    margin: 0 0 5px 0; 
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    color: #FFD700; 
+}
+
+#controls label { 
+    font-size: clamp(0.75em, 1.5vw, 0.85em);
+    margin-bottom: 2px; 
+    display: block; 
+}
+
+#controls input[type="range"] { 
+    width: 100%; 
+    cursor: pointer; 
+    accent-color: #FFD700;
+}
+
+/* ========================================
+   TOMBOL GAME
+   ======================================== */
+#game-btn {
+    position: absolute; 
+    top: 20px; 
+    right: 20px;
+    padding: clamp(10px, 2vw, 12px) clamp(20px, 4vw, 25px);
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    background: linear-gradient(45deg, #ff4444, #cc0000);
+    border: none; 
+    border-radius: 50px; 
+    cursor: pointer;
+    font-weight: bold; 
+    color: white;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    transition: transform 0.2s; 
+    z-index: 10;
+    display: none;
+}
+
+#game-btn:hover { 
+    transform: scale(1.05); 
+}
+
+/* ========================================
+   PLANET TOOLTIP
+   ======================================== */
+#planet-tooltip {
+    position: absolute;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
+    padding: clamp(12px, 2vw, 15px) clamp(20px, 3vw, 25px);
+    border-radius: 15px;
+    pointer-events: none;
+    display: none;
+    z-index: 100;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    animation: tooltipPulse 1.5s ease-in-out infinite;
+    max-width: 200px;
+}
+
+@keyframes tooltipPulse {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+}
+
+#planet-tooltip .tooltip-title {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    font-weight: bold;
+    color: #FFD700;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+#planet-tooltip .tooltip-cta {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#planet-tooltip .tooltip-icon {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    animation: bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(5px); }
+}
+
+/* ========================================
+   QUIZ MODAL
+   ======================================== */
+#quiz-modal {
+    display: none; 
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(10, 15, 30, 0.95);
+    padding: clamp(15px, 3vw, 20px);
+    border-radius: 15px; 
+    border: 2px solid #FFD700;
+    text-align: center; 
+    width: clamp(250px, 80vw, 300px);
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 20;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+#quiz-modal h2 { 
+    margin-top: 0; 
+    color: #FFD700; 
+    font-size: clamp(1rem, 2.5vw, 1.1rem);
+}
+
+#quiz-modal p { 
+    font-size: clamp(0.85rem, 2vw, 0.9rem);
+    line-height: 1.4; 
+    margin-bottom: 15px; 
+}
+
+.options-grid { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; 
+}
+
+.btn-option {
+    background: #333; 
+    color: white; 
+    border: 1px solid #555;
+    padding: clamp(6px, 1.5vw, 8px);
+    border-radius: 8px; 
+    cursor: pointer; 
+    font-size: clamp(0.8rem, 2vw, 0.85rem);
+    transition: 0.2s;
+}
+
+.btn-option:hover { 
+    background: #555; 
+}
+
+#feedback { 
+    display: none; 
+    margin-top: 10px; 
+    font-weight: bold; 
+    font-size: clamp(0.9rem, 2vw, 1rem);
+}
+
+.correct { color: #00ff00; } 
+.wrong { color: #ff0000; }
+
+.close-btn { 
+    margin-top: 10px;
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: clamp(0.75rem, 1.8vw, 0.8rem);
+}
+
+/* ========================================
+   RESPONSIVE MOBILE
+   ======================================== */
+@media (max-width: 768px) {
+    #controls {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-width: calc(100vw - 20px);
+    }
+    
+    #game-btn {
+        top: 10px;
+        right: 10px;
+        left: auto;
+    }
+    
+    .features {
+        margin-top: 30px;
+    }
+    
+    .game-title {
+        margin-bottom: 15px;
+    }
+    
+    .game-subtitle {
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    #quiz-modal {
+        width: 90vw;
+        padding: 15px;
+    }
+    
+    #controls {
+        font-size: 0.85rem;
+    }
+    
+    .features {
+        gap: 15px;
+    }
+    
+    .feature-item {
+        font-size: 0.75rem;
+    }
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+#controls::-webkit-scrollbar,
+#quiz-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+#controls::-webkit-scrollbar-track,
+#quiz-modal::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+#controls::-webkit-scrollbar-thumb,
+#quiz-modal::-webkit-scrollbar-thumb {
+    background: #FFD700;
+    border-radius: 10px;
+}
+
+#controls::-webkit-scrollbar-thumb:hover,
+#quiz-modal::-webkit-scrollbar-thumb:hover {
+    background: #FFA500;
+}
