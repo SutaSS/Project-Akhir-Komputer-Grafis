@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tata Surya Gamifikasi (Shadow Fixed & UI Left)</title>
+    <title>Petualangan Tata Surya 3D - Game Edukasi</title>
     <style>
         body { 
             margin: 0; 
@@ -14,13 +14,131 @@
         }
         canvas { display: block; }
         
+        /* SPLASH SCREEN / MAIN MENU */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #0a0e27 0%, #000000 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 1s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        #splash-screen.hidden {
+            animation: fadeOut 0.8s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        .game-title {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #FFD700, #FFA500, #FF6B6B, #4ECDC4);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .game-subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 50px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.6);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .start-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.8);
+        }
+        
+        .start-btn span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .features {
+            margin-top: 40px;
+            display: flex;
+            gap: 30px;
+        }
+        
+        .feature-item {
+            text-align: center;
+            color: #ddd;
+            font-size: 0.9rem;
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
         /* 1. Panel Kontrol */
         #controls {
             position: absolute;
             top: 10px; left: 10px;
             background: rgba(20, 20, 30, 0.8);
             padding: 15px; border-radius: 10px;
-            display: flex; flex-direction: column; gap: 10px;
+            display: none; /* Hidden awalnya */
+            flex-direction: column; gap: 10px;
             user-select: none; backdrop-filter: blur(5px);
             width: 220px; border: 1px solid rgba(255,255,255,0.1);
             z-index: 10;
@@ -29,18 +147,19 @@
         #controls label { font-size: 0.85em; margin-bottom: 2px; display: block; }
         #controls input[type="range"] { width: 100%; cursor: pointer; accent-color: #FFD700;}
 
-        /* Tombol Game */
+        /* Tombol Game (Akhiri Game) */
         #game-btn {
             position: absolute; top: 20px; right: 20px;
             padding: 12px 25px; font-size: 1rem;
-            background: linear-gradient(45deg, #FFD700, #FFA500);
+            background: linear-gradient(45deg, #ff4444, #cc0000);
             border: none; border-radius: 50px; cursor: pointer;
-            font-weight: bold; color: #000;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-            transition: transform 0.2s; z-index: 10;
+            font-weight: bold; color: white;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            transition: transform 0.2s; 
+            z-index: 10;
+            display: none; /* Hidden awalnya */
         }
         #game-btn:hover { transform: scale(1.05); }
-        #game-btn.active { background: #ff4444; color: white; box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
 
         /* 2. Modal Pertanyaan */
         #quiz-modal {
@@ -79,6 +198,29 @@
     </script>
 </head>
 <body>
+    <!-- SPLASH SCREEN -->
+    <div id="splash-screen">
+        <h1 class="game-title">🌌 PETUALANGAN TATA SURYA 🪐</h1>
+        <p class="game-subtitle">Jelajahi & Pelajari Sistem Tata Surya Secara Interaktif</p>
+        <button class="start-btn" onclick="startGame()">
+            <span>🚀 MULAI PETUALANGAN</span>
+        </button>
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon">🎮</div>
+                <div>Mode Game<br>Interaktif</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎓</div>
+                <div>Belajar Sambil<br>Bermain</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🌟</div>
+                <div>Grafis 3D<br>Realistis</div>
+            </div>
+        </div>
+    </div>
+
     <div id="controls">
         <h3>Panel Kontrol</h3>
         <div><label>Kecepatan Orbit</label><input type="range" id="revolutionSpeed" min="0" max="3" value="1" step="0.1"></div>
@@ -86,7 +228,7 @@
         <div><label>Intensitas Cahaya</label><input type="range" id="lightIntensity" min="0" max="2000" value="1200" step="50"></div>
     </div>
 
-    <button id="game-btn">Mulai Bermain!</button>
+    <button id="game-btn">❌ Akhiri Game</button>
 
     <div id="quiz-modal">
         <h2>Tebak Planet!</h2>
@@ -193,6 +335,20 @@
         const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(3000).map(()=>(Math.random()-0.5)*800), 3)), new THREE.PointsMaterial({size:0.2, color:0xffffff}));
         scene.add(stars);
 
+        // --- START GAME FUNCTION ---
+        window.startGame = () => {
+            const splashScreen = document.getElementById('splash-screen');
+            splashScreen.classList.add('hidden');
+            
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+                document.getElementById('controls').style.display = 'flex';
+                document.getElementById('game-btn').style.display = 'block';
+                isGameActive = true;
+                revSpeedInput.value = 0.5;
+            }, 800);
+        };
+
         // --- GAME LOGIC ---
         let isGameActive = false;
         let focusTarget = null;
@@ -205,18 +361,13 @@
         const quizModal = document.getElementById('quiz-modal');
 
         gameBtn.addEventListener('click', () => {
-            isGameActive = !isGameActive;
-            if(isGameActive) {
-                gameBtn.textContent = "Akhiri Game~";
-                gameBtn.classList.add('active');
-                revSpeedInput.value = 0.5; 
-                alert("Mode Game Aktif! Klik planet untuk ZOOM & TEBAK.");
-            } else {
-                gameBtn.textContent = "Mulai Bermain!";
-                gameBtn.classList.remove('active');
-                revSpeedInput.value = 1; 
-                closeModal();
-            }
+            isGameActive = false;
+            document.getElementById('controls').style.display = 'none';
+            gameBtn.style.display = 'none';
+            document.getElementById('splash-screen').style.display = 'flex';
+            document.getElementById('splash-screen').classList.remove('hidden');
+            revSpeedInput.value = 1;
+            closeModal();
         });
 
         window.addEventListener('mousemove', (event) => {
